@@ -1,0 +1,766 @@
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+getwd()
+setwd("/Users/divyadesadla/Desktop/CMU/CMUFall19/Data Science for Biological Sciences/Homework3")
+Puncta <- read.csv("PVandPOM.csv",header=TRUE)
+head(Puncta)
+```
+
+```{r}
+LogPuncta <- cbind(Puncta[,1:2],log(Puncta[,3:14]+1e-6),Puncta[,15:16])
+```
+
+```{r}
+write.table(LogPuncta,"LogPuncta.txt")
+```
+
+```{r}
+LogPuncta <- read.table("LogPuncta.txt")
+```
+
+```{r}
+TrainingRows <- (n=runif(dim(LogPuncta)[1])>0.1)
+TestingRows <- !TrainingRows
+TrainingInputs <- do.call(cbind, subset(LogPuncta[,3:14],TrainingRows))
+TrainingOutputs <- subset(LogPuncta[,"Presynaptic.association"]=="PV",TrainingRows)
+TrainData <- cbind(TrainingInputs,TrainingOutputs)
+colnames(TrainData)[13] <- "Output"
+
+TestingInputs <- do.call(cbind, subset(LogPuncta[,3:14],TestingRows))
+TestingOutputs <- subset(LogPuncta[,"Presynaptic.association"]=="PV",TestingRows)
+TestingData <- cbind(TestingInputs,TestingOutputs)
+colnames(TestingData)[13] <- "Output"
+```
+
+```{r}
+CVLogisticFit <- glm(formula= Output ~ Area + Ellipticity..oblate.
+                     + Intensity.Median,
+                     data=as.data.frame(TrainData),
+                     family=binomial(link='logit'))
+CVLogisticFit
+CVLogisticFit$coefficients
+```
+
+
+```{r}
+TrainTP <- sum(TrainingOutputs & (CVLogisticFit$fitted.values>0.5))
+TrainTN <- sum(!TrainingOutputs & !(CVLogisticFit$fitted.values>0.5))
+TrainFP <- sum(!TrainingOutputs & (CVLogisticFit$fitted.values>0.5))
+TrainFN <- sum(TrainingOutputs & !(CVLogisticFit$fitted.values>0.5))
+
+
+Accuracy <- (TrainTP+TrainTN)/(TrainTP+TrainTN+TrainFP+ TrainFN)
+Sensitivity <- (TrainTP)/(TrainTP+TrainFN)
+Specificity<- (TrainTN)/(TrainTN+ TrainFP)
+Precision<- (TrainTP)/(TrainTP+ TrainFP)
+F_score <- (2*TrainTP)/(2* TrainTP+ TrainFP+ TrainFN)
+```
+
+```{r}
+CVLogisticFit <- glm(formula= Output ~ Area + Ellipticity..oblate. + Ellipticity..prolate. + Intensity.Max + Intensity.Mean
+                     + Intensity.Median + Intensity.Min + Intensity.StdDev + Intensity.Sum + Number.of.Vertices + Sphericity
+                     + Volume, 
+                     data=as.data.frame(TrainData),
+                     family=binomial(link='logit'))
+CVLogisticFit
+CVLogisticFit$coefficients
+```
+
+```{r}
+TrainTP <- sum(TrainingOutputs & (CVLogisticFit$fitted.values>0.5))
+TrainTN <- sum(!TrainingOutputs & !(CVLogisticFit$fitted.values>0.5))
+TrainFP <- sum(!TrainingOutputs & (CVLogisticFit$fitted.values>0.5))
+TrainFN <- sum(TrainingOutputs & !(CVLogisticFit$fitted.values>0.5))
+
+Accuracy <- (TrainTP+TrainTN)/(TrainTP+TrainTN+TrainFP+ TrainFN)
+Accuracy
+
+```
+
+```{r}
+CVPredictions <- predict(CVLogisticFit,as.data.frame(cbind(TestingInputs,TestingOutputs)),type="response")
+```
+
+```{r}
+TestTP <- sum(TestingOutputs & (CVPredictions>0.5))
+TestTN <- sum(!TestingOutputs & !( CVPredictions >0.5))
+TestFP <- sum(!TestingOutputs & (CVPredictions >0.5))
+TestFN <- sum(TestingOutputs & !( CVPredictions >0.5))
+
+Accuracy <- (TestTP+TestTN)/(TestTP+TestTN+TestFP+ TestFN)
+Accuracy
+```
+
+```{r}
+chisq.test(matrix(data=c(TestTP,TestFP,TestFN,TestTN),nrow=2,ncol=2))
+```
+
+```{r}
+CVLogisticFit <- glm(formula= Output ~ Area + Ellipticity..oblate. + 
+                   Intensity.Median +  Volume, 
+                   data=as.data.frame(TrainData), 
+                   family=binomial(link='logit'))
+CVLogisticFit$coefficients
+```
+
+```{r}
+TrainTP <- sum(TrainingOutputs & (CVLogisticFit$fitted.values>0.5))
+TrainTN <- sum(!TrainingOutputs & !(CVLogisticFit$fitted.values>0.5))
+TrainFP <- sum(!TrainingOutputs & (CVLogisticFit$fitted.values>0.5))
+TrainFN <- sum(TrainingOutputs & !(CVLogisticFit$fitted.values>0.5))
+
+Accuracy <- (TrainTP+TrainTN)/(TrainTP+TrainTN+TrainFP+ TrainFN)
+Accuracy
+
+```
+
+CVLogisticFit <- glm(formula= Output ~ Area + Ellipticity..oblate. + 
+                   Intensity.Median,
+                   data=as.data.frame(TrainData), 
+                   family=binomial(link='logit'))
+CVLogisticFit$coefficients
+```
+```{r}
+TrainTP <- sum(TrainingOutputs & (CVLogisticFit$fitted.values>0.5))
+TrainTN <- sum(!TrainingOutputs & !(CVLogisticFit$fitted.values>0.5))
+TrainFP <- sum(!TrainingOutputs & (CVLogisticFit$fitted.values>0.5))
+TrainFN <- sum(TrainingOutputs & !(CVLogisticFit$fitted.values>0.5))
+
+Accuracy <- (TrainTP+TrainTN)/(TrainTP+TrainTN+TrainFP+ TrainFN)
+Accuracy
+```
+
+```{r}
+CVPredictions <- predict(CVLogisticFit,as.data.frame(cbind(TestingInputs,TestingOutputs)),type="response")
+```
+
+```{r}
+TestTP <- sum(TestingOutputs & (CVPredictions>0.5))
+TestTN <- sum(!TestingOutputs & !( CVPredictions >0.5))
+TestFP <- sum(!TestingOutputs & (CVPredictions >0.5))
+TestFN <- sum(TestingOutputs & !( CVPredictions >0.5))
+
+Accuracy <- (TestTP+TestTN)/(TestTP+TestTN+TestFP+ TestFN)
+Accuracy
+```
+```{r}
+chisq.test(matrix(data=c(TestTP,TestFP,TestFN,TestTN),nrow=2,ncol=2))
+```
+
+```{r}
+CVLogisticFit <- glm(formula= Output ~ Area + Ellipticity..oblate. + 
+                   Intensity.Median +  Intensity.Max, 
+                   data=as.data.frame(TrainData), 
+                   family=binomial(link='logit'))
+CVLogisticFit$coefficients
+```
+```{r}
+TrainTP <- sum(TrainingOutputs & (CVLogisticFit$fitted.values>0.5))
+TrainTN <- sum(!TrainingOutputs & !(CVLogisticFit$fitted.values>0.5))
+TrainFP <- sum(!TrainingOutputs & (CVLogisticFit$fitted.values>0.5))
+TrainFN <- sum(TrainingOutputs & !(CVLogisticFit$fitted.values>0.5))
+
+Accuracy <- (TrainTP+TrainTN)/(TrainTP+TrainTN+TrainFP+ TrainFN)
+Accuracy
+```
+
+```{r}
+CVPredictions <- predict(CVLogisticFit,as.data.frame(cbind(TestingInputs,TestingOutputs)),type="response")
+```
+
+```{r}
+TestTP <- sum(TestingOutputs & (CVPredictions>0.5))
+TestTN <- sum(!TestingOutputs & !( CVPredictions >0.5))
+TestFP <- sum(!TestingOutputs & (CVPredictions >0.5))
+TestFN <- sum(TestingOutputs & !( CVPredictions >0.5))
+
+Accuracy <- (TestTP+TestTN)/(TestTP+TestTN+TestFP+ TestFN)
+Accuracy
+```
+```{r}
+chisq.test(matrix(data=c(TestTP,TestFP,TestFN,TestTN),nrow=2,ncol=2))
+```
+
+```{r}
+CVLogisticFit <- glm(formula= Output ~ Area + Ellipticity..oblate. + 
+                   Intensity.Median +  Intensity.Min, 
+                   data=as.data.frame(TrainData), 
+                   family=binomial(link='logit'))
+CVLogisticFit$coefficients
+```
+```{r}
+TrainTP <- sum(TrainingOutputs & (CVLogisticFit$fitted.values>0.5))
+TrainTN <- sum(!TrainingOutputs & !(CVLogisticFit$fitted.values>0.5))
+TrainFP <- sum(!TrainingOutputs & (CVLogisticFit$fitted.values>0.5))
+TrainFN <- sum(TrainingOutputs & !(CVLogisticFit$fitted.values>0.5))
+
+Accuracy <- (TrainTP+TrainTN)/(TrainTP+TrainTN+TrainFP+ TrainFN)
+Accuracy
+```
+
+```{r}
+CVPredictions <- predict(CVLogisticFit,as.data.frame(cbind(TestingInputs,TestingOutputs)),type="response")
+```
+
+```{r}
+TestTP <- sum(TestingOutputs & (CVPredictions>0.5))
+TestTN <- sum(!TestingOutputs & !( CVPredictions >0.5))
+TestFP <- sum(!TestingOutputs & (CVPredictions >0.5))
+TestFN <- sum(TestingOutputs & !( CVPredictions >0.5))
+
+Accuracy <- (TestTP+TestTN)/(TestTP+TestTN+TestFP+ TestFN)
+Accuracy
+```
+```{r}
+chisq.test(matrix(data=c(TestTP,TestFP,TestFN,TestTN),nrow=2,ncol=2))
+```
+
+
+```{r}
+CVLogisticFit <- glm(formula= Output ~ Area + Ellipticity..oblate. + 
+                   Intensity.Median +  Intensity.Mean, 
+                   data=as.data.frame(TrainData), 
+                   family=binomial(link='logit'))
+CVLogisticFit$coefficients
+```
+```{r}
+TrainTP <- sum(TrainingOutputs & (CVLogisticFit$fitted.values>0.5))
+TrainTN <- sum(!TrainingOutputs & !(CVLogisticFit$fitted.values>0.5))
+TrainFP <- sum(!TrainingOutputs & (CVLogisticFit$fitted.values>0.5))
+TrainFN <- sum(TrainingOutputs & !(CVLogisticFit$fitted.values>0.5))
+
+Accuracy <- (TrainTP+TrainTN)/(TrainTP+TrainTN+TrainFP+ TrainFN)
+Accuracy
+```
+
+```{r}
+CVPredictions <- predict(CVLogisticFit,as.data.frame(cbind(TestingInputs,TestingOutputs)),type="response")
+```
+
+```{r}
+TestTP <- sum(TestingOutputs & (CVPredictions>0.5))
+TestTN <- sum(!TestingOutputs & !( CVPredictions >0.5))
+TestFP <- sum(!TestingOutputs & (CVPredictions >0.5))
+TestFN <- sum(TestingOutputs & !( CVPredictions >0.5))
+
+Accuracy <- (TestTP+TestTN)/(TestTP+TestTN+TestFP+ TestFN)
+Accuracy
+```
+```{r}
+chisq.test(matrix(data=c(TestTP,TestFP,TestFN,TestTN),nrow=2,ncol=2))
+```
+
+```{r}
+CVLogisticFit <- glm(formula= Output ~ Area + Ellipticity..oblate. + 
+                   Intensity.Median +  Intensity.StdDev, 
+                   data=as.data.frame(TrainData), 
+                   family=binomial(link='logit'))
+CVLogisticFit$coefficients
+```
+```{r}
+TrainTP <- sum(TrainingOutputs & (CVLogisticFit$fitted.values>0.5))
+TrainTN <- sum(!TrainingOutputs & !(CVLogisticFit$fitted.values>0.5))
+TrainFP <- sum(!TrainingOutputs & (CVLogisticFit$fitted.values>0.5))
+TrainFN <- sum(TrainingOutputs & !(CVLogisticFit$fitted.values>0.5))
+
+Accuracy <- (TrainTP+TrainTN)/(TrainTP+TrainTN+TrainFP+ TrainFN)
+Accuracy
+```
+
+```{r}
+CVPredictions <- predict(CVLogisticFit,as.data.frame(cbind(TestingInputs,TestingOutputs)),type="response")
+```
+
+```{r}
+TestTP <- sum(TestingOutputs & (CVPredictions>0.5))
+TestTN <- sum(!TestingOutputs & !( CVPredictions >0.5))
+TestFP <- sum(!TestingOutputs & (CVPredictions >0.5))
+TestFN <- sum(TestingOutputs & !( CVPredictions >0.5))
+
+Accuracy <- (TestTP+TestTN)/(TestTP+TestTN+TestFP+ TestFN)
+Accuracy
+```
+```{r}
+chisq.test(matrix(data=c(TestTP,TestFP,TestFN,TestTN),nrow=2,ncol=2))
+```
+
+```{r}
+CVLogisticFit <- glm(formula= Output ~ Area + Ellipticity..oblate. + 
+                   Intensity.Median +  Intensity.Sum, 
+                   data=as.data.frame(TrainData), 
+                   family=binomial(link='logit'))
+CVLogisticFit$coefficients
+```
+```{r}
+TrainTP <- sum(TrainingOutputs & (CVLogisticFit$fitted.values>0.5))
+TrainTN <- sum(!TrainingOutputs & !(CVLogisticFit$fitted.values>0.5))
+TrainFP <- sum(!TrainingOutputs & (CVLogisticFit$fitted.values>0.5))
+TrainFN <- sum(TrainingOutputs & !(CVLogisticFit$fitted.values>0.5))
+
+Accuracy <- (TrainTP+TrainTN)/(TrainTP+TrainTN+TrainFP+ TrainFN)
+Accuracy
+```
+
+```{r}
+CVPredictions <- predict(CVLogisticFit,as.data.frame(cbind(TestingInputs,TestingOutputs)),type="response")
+```
+
+```{r}
+TestTP <- sum(TestingOutputs & (CVPredictions>0.5))
+TestTN <- sum(!TestingOutputs & !( CVPredictions >0.5))
+TestFP <- sum(!TestingOutputs & (CVPredictions >0.5))
+TestFN <- sum(TestingOutputs & !( CVPredictions >0.5))
+
+Accuracy <- (TestTP+TestTN)/(TestTP+TestTN+TestFP+ TestFN)
+Accuracy
+```
+```{r}
+chisq.test(matrix(data=c(TestTP,TestFP,TestFN,TestTN),nrow=2,ncol=2))
+```
+
+```{r}
+CVLogisticFit <- glm(formula= Output ~ Area + Ellipticity..oblate. + 
+                   Intensity.Median +  Number.of.Vertices, 
+                   data=as.data.frame(TrainData), 
+                   family=binomial(link='logit'))
+CVLogisticFit$coefficients
+```
+```{r}
+TrainTP <- sum(TrainingOutputs & (CVLogisticFit$fitted.values>0.5))
+TrainTN <- sum(!TrainingOutputs & !(CVLogisticFit$fitted.values>0.5))
+TrainFP <- sum(!TrainingOutputs & (CVLogisticFit$fitted.values>0.5))
+TrainFN <- sum(TrainingOutputs & !(CVLogisticFit$fitted.values>0.5))
+
+Accuracy <- (TrainTP+TrainTN)/(TrainTP+TrainTN+TrainFP+ TrainFN)
+Accuracy
+```
+
+```{r}
+CVPredictions <- predict(CVLogisticFit,as.data.frame(cbind(TestingInputs,TestingOutputs)),type="response")
+```
+
+```{r}
+TestTP <- sum(TestingOutputs & (CVPredictions>0.5))
+TestTN <- sum(!TestingOutputs & !( CVPredictions >0.5))
+TestFP <- sum(!TestingOutputs & (CVPredictions >0.5))
+TestFN <- sum(TestingOutputs & !( CVPredictions >0.5))
+
+Accuracy <- (TestTP+TestTN)/(TestTP+TestTN+TestFP+ TestFN)
+Accuracy
+```
+```{r}
+chisq.test(matrix(data=c(TestTP,TestFP,TestFN,TestTN),nrow=2,ncol=2))
+```
+
+```{r}
+CVLogisticFit <- glm(formula= Output ~ Area + Ellipticity..oblate. + 
+                   Intensity.Median +  Sphericity, 
+                   data=as.data.frame(TrainData), 
+                   family=binomial(link='logit'))
+CVLogisticFit$coefficients
+```
+```{r}
+TrainTP <- sum(TrainingOutputs & (CVLogisticFit$fitted.values>0.5))
+TrainTN <- sum(!TrainingOutputs & !(CVLogisticFit$fitted.values>0.5))
+TrainFP <- sum(!TrainingOutputs & (CVLogisticFit$fitted.values>0.5))
+TrainFN <- sum(TrainingOutputs & !(CVLogisticFit$fitted.values>0.5))
+
+Accuracy <- (TrainTP+TrainTN)/(TrainTP+TrainTN+TrainFP+ TrainFN)
+Accuracy
+```
+
+```{r}
+CVPredictions <- predict(CVLogisticFit,as.data.frame(cbind(TestingInputs,TestingOutputs)),type="response")
+```
+
+```{r}
+TestTP <- sum(TestingOutputs & (CVPredictions>0.5))
+TestTN <- sum(!TestingOutputs & !( CVPredictions >0.5))
+TestFP <- sum(!TestingOutputs & (CVPredictions >0.5))
+TestFN <- sum(TestingOutputs & !( CVPredictions >0.5))
+
+Accuracy <- (TestTP+TestTN)/(TestTP+TestTN+TestFP+ TestFN)
+Accuracy
+```
+```{r}
+chisq.test(matrix(data=c(TestTP,TestFP,TestFN,TestTN),nrow=2,ncol=2))
+```
+
+```{r}
+CVLogisticFit <- glm(formula= Output ~ Area + Ellipticity..oblate. + 
+                   Intensity.Median + Intensity.Max,
+                   data=as.data.frame(TrainData), 
+                   family=binomial(link='logit'))
+CVLogisticFit$coefficients
+```
+```{r}
+TrainTP <- sum(TrainingOutputs & (CVLogisticFit$fitted.values>0.5))
+TrainTN <- sum(!TrainingOutputs & !(CVLogisticFit$fitted.values>0.5))
+TrainFP <- sum(!TrainingOutputs & (CVLogisticFit$fitted.values>0.5))
+TrainFN <- sum(TrainingOutputs & !(CVLogisticFit$fitted.values>0.5))
+
+Accuracy <- (TrainTP+TrainTN)/(TrainTP+TrainTN+TrainFP+ TrainFN)
+Accuracy
+```
+
+```{r}
+CVPredictions <- predict(CVLogisticFit,as.data.frame(cbind(TestingInputs,TestingOutputs)),type="response")
+```
+
+```{r}
+TestTP <- sum(TestingOutputs & (CVPredictions>0.5))
+TestTN <- sum(!TestingOutputs & !( CVPredictions >0.5))
+TestFP <- sum(!TestingOutputs & (CVPredictions >0.5))
+TestFN <- sum(TestingOutputs & !( CVPredictions >0.5))
+
+Accuracy <- (TestTP+TestTN)/(TestTP+TestTN+TestFP+ TestFN)
+Accuracy
+```
+```{r}
+chisq.test(matrix(data=c(TestTP,TestFP,TestFN,TestTN),nrow=2,ncol=2))
+```
+
+```{r}
+CVLogisticFit <- glm(formula= Output ~ Area + Ellipticity..oblate. + 
+                   Intensity.Median + Intensity.Max + Intensity.Min, 
+                   data=as.data.frame(TrainData), 
+                   family=binomial(link='logit'))
+CVLogisticFit$coefficients
+```
+```{r}
+TrainTP <- sum(TrainingOutputs & (CVLogisticFit$fitted.values>0.5))
+TrainTN <- sum(!TrainingOutputs & !(CVLogisticFit$fitted.values>0.5))
+TrainFP <- sum(!TrainingOutputs & (CVLogisticFit$fitted.values>0.5))
+TrainFN <- sum(TrainingOutputs & !(CVLogisticFit$fitted.values>0.5))
+
+Accuracy <- (TrainTP+TrainTN)/(TrainTP+TrainTN+TrainFP+ TrainFN)
+Accuracy
+```
+
+```{r}
+CVPredictions <- predict(CVLogisticFit,as.data.frame(cbind(TestingInputs,TestingOutputs)),type="response")
+```
+
+```{r}
+TestTP <- sum(TestingOutputs & (CVPredictions>0.5))
+TestTN <- sum(!TestingOutputs & !( CVPredictions >0.5))
+TestFP <- sum(!TestingOutputs & (CVPredictions >0.5))
+TestFN <- sum(TestingOutputs & !( CVPredictions >0.5))
+
+Accuracy <- (TestTP+TestTN)/(TestTP+TestTN+TestFP+ TestFN)
+Accuracy
+```
+```{r}
+chisq.test(matrix(data=c(TestTP,TestFP,TestFN,TestTN),nrow=2,ncol=2))
+```
+
+```{r}
+CVLogisticFit <- glm(formula= Output ~ Area + Ellipticity..oblate. + 
+                   Intensity.Median + Intensity.Max +  Intensity.Mean, 
+                   data=as.data.frame(TrainData), 
+                   family=binomial(link='logit'))
+CVLogisticFit$coefficients
+```
+```{r}
+TrainTP <- sum(TrainingOutputs & (CVLogisticFit$fitted.values>0.5))
+TrainTN <- sum(!TrainingOutputs & !(CVLogisticFit$fitted.values>0.5))
+TrainFP <- sum(!TrainingOutputs & (CVLogisticFit$fitted.values>0.5))
+TrainFN <- sum(TrainingOutputs & !(CVLogisticFit$fitted.values>0.5))
+
+Accuracy <- (TrainTP+TrainTN)/(TrainTP+TrainTN+TrainFP+ TrainFN)
+Accuracy
+```
+
+```{r}
+CVPredictions <- predict(CVLogisticFit,as.data.frame(cbind(TestingInputs,TestingOutputs)),type="response")
+```
+
+```{r}
+TestTP <- sum(TestingOutputs & (CVPredictions>0.5))
+TestTN <- sum(!TestingOutputs & !( CVPredictions >0.5))
+TestFP <- sum(!TestingOutputs & (CVPredictions >0.5))
+TestFN <- sum(TestingOutputs & !( CVPredictions >0.5))
+
+Accuracy <- (TestTP+TestTN)/(TestTP+TestTN+TestFP+ TestFN)
+Accuracy
+```
+```{r}
+chisq.test(matrix(data=c(TestTP,TestFP,TestFN,TestTN),nrow=2,ncol=2))
+```
+
+```{r}
+CVLogisticFit <- glm(formula= Output ~ Area + Ellipticity..oblate. + 
+                   Intensity.Median + Intensity.Max + Intensity.StdDev, 
+                   data=as.data.frame(TrainData), 
+                   family=binomial(link='logit'))
+CVLogisticFit$coefficients
+```
+```{r}
+TrainTP <- sum(TrainingOutputs & (CVLogisticFit$fitted.values>0.5))
+TrainTN <- sum(!TrainingOutputs & !(CVLogisticFit$fitted.values>0.5))
+TrainFP <- sum(!TrainingOutputs & (CVLogisticFit$fitted.values>0.5))
+TrainFN <- sum(TrainingOutputs & !(CVLogisticFit$fitted.values>0.5))
+
+Accuracy <- (TrainTP+TrainTN)/(TrainTP+TrainTN+TrainFP+ TrainFN)
+Accuracy
+```
+
+```{r}
+CVPredictions <- predict(CVLogisticFit,as.data.frame(cbind(TestingInputs,TestingOutputs)),type="response")
+```
+
+```{r}
+TestTP <- sum(TestingOutputs & (CVPredictions>0.5))
+TestTN <- sum(!TestingOutputs & !( CVPredictions >0.5))
+TestFP <- sum(!TestingOutputs & (CVPredictions >0.5))
+TestFN <- sum(TestingOutputs & !( CVPredictions >0.5))
+
+Accuracy <- (TestTP+TestTN)/(TestTP+TestTN+TestFP+ TestFN)
+Accuracy
+```
+```{r}
+chisq.test(matrix(data=c(TestTP,TestFP,TestFN,TestTN),nrow=2,ncol=2))
+```
+
+```{r}
+CVLogisticFit <- glm(formula= Output ~ Area + Ellipticity..oblate. + 
+                   Intensity.Median + Intensity.Max + Intensity.Sum, 
+                   data=as.data.frame(TrainData), 
+                   family=binomial(link='logit'))
+CVLogisticFit$coefficients
+```
+```{r}
+TrainTP <- sum(TrainingOutputs & (CVLogisticFit$fitted.values>0.5))
+TrainTN <- sum(!TrainingOutputs & !(CVLogisticFit$fitted.values>0.5))
+TrainFP <- sum(!TrainingOutputs & (CVLogisticFit$fitted.values>0.5))
+TrainFN <- sum(TrainingOutputs & !(CVLogisticFit$fitted.values>0.5))
+
+Accuracy <- (TrainTP+TrainTN)/(TrainTP+TrainTN+TrainFP+ TrainFN)
+Accuracy
+```
+
+```{r}
+CVPredictions <- predict(CVLogisticFit,as.data.frame(cbind(TestingInputs,TestingOutputs)),type="response")
+```
+
+```{r}
+TestTP <- sum(TestingOutputs & (CVPredictions>0.5))
+TestTN <- sum(!TestingOutputs & !( CVPredictions >0.5))
+TestFP <- sum(!TestingOutputs & (CVPredictions >0.5))
+TestFN <- sum(TestingOutputs & !( CVPredictions >0.5))
+
+Accuracy <- (TestTP+TestTN)/(TestTP+TestTN+TestFP+ TestFN)
+Accuracy
+```
+```{r}
+chisq.test(matrix(data=c(TestTP,TestFP,TestFN,TestTN),nrow=2,ncol=2))
+```
+
+```{r}
+CVLogisticFit <- glm(formula= Output ~ Area + Ellipticity..oblate. + 
+                   Intensity.Median + Intensity.Max + Number.of.Vertices, 
+                   data=as.data.frame(TrainData), 
+                   family=binomial(link='logit'))
+CVLogisticFit$coefficients
+```
+```{r}
+TrainTP <- sum(TrainingOutputs & (CVLogisticFit$fitted.values>0.5))
+TrainTN <- sum(!TrainingOutputs & !(CVLogisticFit$fitted.values>0.5))
+TrainFP <- sum(!TrainingOutputs & (CVLogisticFit$fitted.values>0.5))
+TrainFN <- sum(TrainingOutputs & !(CVLogisticFit$fitted.values>0.5))
+
+Accuracy <- (TrainTP+TrainTN)/(TrainTP+TrainTN+TrainFP+ TrainFN)
+Accuracy
+```
+
+```{r}
+CVPredictions <- predict(CVLogisticFit,as.data.frame(cbind(TestingInputs,TestingOutputs)),type="response")
+```
+
+```{r}
+TestTP <- sum(TestingOutputs & (CVPredictions>0.5))
+TestTN <- sum(!TestingOutputs & !( CVPredictions >0.5))
+TestFP <- sum(!TestingOutputs & (CVPredictions >0.5))
+TestFN <- sum(TestingOutputs & !( CVPredictions >0.5))
+
+Accuracy <- (TestTP+TestTN)/(TestTP+TestTN+TestFP+ TestFN)
+Accuracy
+```
+```{r}
+chisq.test(matrix(data=c(TestTP,TestFP,TestFN,TestTN),nrow=2,ncol=2))
+```
+
+```{r}
+CVLogisticFit <- glm(formula= Output ~ Area + Ellipticity..oblate. + 
+                   Intensity.Median + Intensity.Max +  Sphericity, 
+                   data=as.data.frame(TrainData), 
+                   family=binomial(link='logit'))
+CVLogisticFit$coefficients
+```
+```{r}
+TrainTP <- sum(TrainingOutputs & (CVLogisticFit$fitted.values>0.5))
+TrainTN <- sum(!TrainingOutputs & !(CVLogisticFit$fitted.values>0.5))
+TrainFP <- sum(!TrainingOutputs & (CVLogisticFit$fitted.values>0.5))
+TrainFN <- sum(TrainingOutputs & !(CVLogisticFit$fitted.values>0.5))
+
+Accuracy <- (TrainTP+TrainTN)/(TrainTP+TrainTN+TrainFP+ TrainFN)
+Accuracy
+```
+
+```{r}
+CVPredictions <- predict(CVLogisticFit,as.data.frame(cbind(TestingInputs,TestingOutputs)),type="response")
+```
+
+```{r}
+TestTP <- sum(TestingOutputs & (CVPredictions>0.5))
+TestTN <- sum(!TestingOutputs & !( CVPredictions >0.5))
+TestFP <- sum(!TestingOutputs & (CVPredictions >0.5))
+TestFN <- sum(TestingOutputs & !( CVPredictions >0.5))
+
+Accuracy <- (TestTP+TestTN)/(TestTP+TestTN+TestFP+ TestFN)
+Accuracy
+```
+```{r}
+chisq.test(matrix(data=c(TestTP,TestFP,TestFN,TestTN),nrow=2,ncol=2))
+```
+
+```{r}
+CVLogisticFit <- glm(formula= Output ~ Area + Ellipticity..oblate. + Ellipticity..prolate. + Number.of.Vertices + Sphericity
+                     + Volume, 
+                   data=as.data.frame(TrainData), 
+                   family=binomial(link='logit'))
+CVLogisticFit$coefficients
+```
+```{r}
+TrainTP <- sum(TrainingOutputs & (CVLogisticFit$fitted.values>0.5))
+TrainTN <- sum(!TrainingOutputs & !(CVLogisticFit$fitted.values>0.5))
+TrainFP <- sum(!TrainingOutputs & (CVLogisticFit$fitted.values>0.5))
+TrainFN <- sum(TrainingOutputs & !(CVLogisticFit$fitted.values>0.5))
+
+Accuracy <- (TrainTP+TrainTN)/(TrainTP+TrainTN+TrainFP+ TrainFN)
+Accuracy
+```
+
+```{r}
+CVPredictions <- predict(CVLogisticFit,as.data.frame(cbind(TestingInputs,TestingOutputs)),type="response")
+```
+
+```{r}
+TestTP <- sum(TestingOutputs & (CVPredictions>0.5))
+TestTN <- sum(!TestingOutputs & !( CVPredictions >0.5))
+TestFP <- sum(!TestingOutputs & (CVPredictions >0.5))
+TestFN <- sum(TestingOutputs & !( CVPredictions >0.5))
+
+Accuracy <- (TestTP+TestTN)/(TestTP+TestTN+TestFP+ TestFN)
+Accuracy
+```
+```{r}
+chisq.test(matrix(data=c(TestTP,TestFP,TestFN,TestTN),nrow=2,ncol=2))
+```
+
+```{r}
+CVLogisticFit <- glm(formula= Output ~ Area + Area^2 + Ellipticity..oblate. + Ellipticity..oblate.^2 + Ellipticity..prolate. + Ellipticity..prolate.^2 + Intensity.Max + Intensity.Max^2 + Intensity.Mean + Intensity.Mean^2
+                     + Intensity.Median + Intensity.Median^2 + Intensity.Min + Intensity.Min^2 + Intensity.StdDev + Intensity.StdDev^2 + Intensity.Sum + Intensity.Sum^2 + Number.of.Vertices + Number.of.Vertices^2 + Sphericity + Sphericity^2
+                     + Volume + Volume^2,  
+                   data=as.data.frame(TrainData), 
+                   family=binomial(link='logit'))
+CVLogisticFit$coefficients
+```
+```{r}
+TrainTP <- sum(TrainingOutputs & (CVLogisticFit$fitted.values>0.5))
+TrainTN <- sum(!TrainingOutputs & !(CVLogisticFit$fitted.values>0.5))
+TrainFP <- sum(!TrainingOutputs & (CVLogisticFit$fitted.values>0.5))
+TrainFN <- sum(TrainingOutputs & !(CVLogisticFit$fitted.values>0.5))
+
+Accuracy <- (TrainTP+TrainTN)/(TrainTP+TrainTN+TrainFP+ TrainFN)
+Accuracy
+```
+
+```{r}
+CVPredictions <- predict(CVLogisticFit,as.data.frame(cbind(TestingInputs,TestingOutputs)),type="response")
+```
+
+```{r}
+TestTP <- sum(TestingOutputs & (CVPredictions>0.5))
+TestTN <- sum(!TestingOutputs & !( CVPredictions >0.5))
+TestFP <- sum(!TestingOutputs & (CVPredictions >0.5))
+TestFN <- sum(TestingOutputs & !( CVPredictions >0.5))
+
+Accuracy <- (TestTP+TestTN)/(TestTP+TestTN+TestFP+ TestFN)
+Accuracy
+```
+```{r}
+chisq.test(matrix(data=c(TestTP,TestFP,TestFN,TestTN),nrow=2,ncol=2))
+```
+
+```{r}
+CVLogisticFit <- glm(formula= Output ~ Area + Area^2 + Ellipticity..oblate. + Ellipticity..oblate.^2 + Ellipticity..prolate. + Ellipticity..prolate.^2 + Number.of.Vertices + Number.of.Vertices^2 + Sphericity + Sphericity^2
+                     + Volume + Volume^2, 
+                   data=as.data.frame(TrainData), 
+                   family=binomial(link='logit'))
+CVLogisticFit$coefficients
+```
+```{r}
+TrainTP <- sum(TrainingOutputs & (CVLogisticFit$fitted.values>0.5))
+TrainTN <- sum(!TrainingOutputs & !(CVLogisticFit$fitted.values>0.5))
+TrainFP <- sum(!TrainingOutputs & (CVLogisticFit$fitted.values>0.5))
+TrainFN <- sum(TrainingOutputs & !(CVLogisticFit$fitted.values>0.5))
+
+Accuracy <- (TrainTP+TrainTN)/(TrainTP+TrainTN+TrainFP+ TrainFN)
+Accuracy
+```
+
+```{r}
+CVPredictions <- predict(CVLogisticFit,as.data.frame(cbind(TestingInputs,TestingOutputs)),type="response")
+```
+
+```{r}
+TestTP <- sum(TestingOutputs & (CVPredictions>0.5))
+TestTN <- sum(!TestingOutputs & !( CVPredictions >0.5))
+TestFP <- sum(!TestingOutputs & (CVPredictions >0.5))
+TestFN <- sum(TestingOutputs & !( CVPredictions >0.5))
+
+Accuracy <- (TestTP+TestTN)/(TestTP+TestTN+TestFP+ TestFN)
+Accuracy
+```
+```{r}
+chisq.test(matrix(data=c(TestTP,TestFP,TestFN,TestTN),nrow=2,ncol=2))
+```
+
+```{r}
+CVLogisticFit <- glm(formula= Output ~ Area + Area^2 + Ellipticity..oblate. + Ellipticity..oblate.^2 + Ellipticity..prolate. + Ellipticity..prolate.^2 + Intensity.Max + Intensity.Mean + 
+                   Intensity.Median + Intensity.Min + Intensity.StdDev + Intensity.Sum + Number.of.Vertices + Number.of.Vertices^2 + Sphericity + Sphericity^2
+                     + Volume + Volume^2, 
+                   data=as.data.frame(TrainData), 
+                   family=binomial(link='logit'))
+CVLogisticFit$coefficients
+```
+```{r}
+TrainTP <- sum(TrainingOutputs & (CVLogisticFit$fitted.values>0.5))
+TrainTN <- sum(!TrainingOutputs & !(CVLogisticFit$fitted.values>0.5))
+TrainFP <- sum(!TrainingOutputs & (CVLogisticFit$fitted.values>0.5))
+TrainFN <- sum(TrainingOutputs & !(CVLogisticFit$fitted.values>0.5))
+Accuracy <- (TrainTP+TrainTN)/(TrainTP+TrainTN+TrainFP+ TrainFN)
+Accuracy
+```
+
+```{r}
+CVPredictions <- predict(CVLogisticFit,as.data.frame(cbind(TestingInputs,TestingOutputs)),type="response")
+```
+
+```{r}
+TestTP <- sum(TestingOutputs & (CVPredictions>0.5))
+TestTN <- sum(!TestingOutputs & !( CVPredictions >0.5))
+TestFP <- sum(!TestingOutputs & (CVPredictions >0.5))
+TestFN <- sum(TestingOutputs & !( CVPredictions >0.5))
+
+Accuracy <- (TestTP+TestTN)/(TestTP+TestTN+TestFP+ TestFN)
+Accuracy
+```
+```{r}
+chisq.test(matrix(data=c(TestTP,TestFP,TestFN,TestTN),nrow=2,ncol=2))
+```
